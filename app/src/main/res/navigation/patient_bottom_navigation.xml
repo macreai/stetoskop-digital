@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/patient_bottom_navigation"
+    app:startDestination="@id/homePatientFragment">
+
+    <fragment
+        android:id="@+id/homePatientFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.HomePatientFragment"
+        android:label="fragment_home_patient"
+        tools:layout="@layout/fragment_home_patient" />
+    <fragment
+        android:id="@+id/recordPatientFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.RecordPatientFragment"
+        android:label="fragment_record_patient"
+        tools:layout="@layout/fragment_record_patient" />
+    <fragment
+        android:id="@+id/predictPatientFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.PredictPatientFragment"
+        android:label="fragment_predict_patient"
+        tools:layout="@layout/fragment_predict_patient" />
+</navigation>
