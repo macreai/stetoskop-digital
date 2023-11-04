@@ -84,6 +84,8 @@ public class NormalizeAudio {
             File audioDir = null;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 audioDir = contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS);
+            } else {
+                audioDir = contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
             }
             File files = new File(audioDir,System.currentTimeMillis()+"-"+fileName+".wav");
             OutputStream out  = new FileOutputStream(files);
