@@ -10,7 +10,6 @@ import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaRecorder.AudioSource
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -28,7 +27,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.apicta.stetoskop_digital.audio.ArrayStandardization
 import com.apicta.stetoskop_digital.audio.FloatArrayListToWav
-import com.apicta.stetoskop_digital.audio.FloatArrayListToWav.shortToBytes
+import com.apicta.stetoskop_digital.audio.PcmToWav
 import com.apicta.stetoskop_digital.databinding.FragmentRecordPatientBinding
 import com.apicta.stetoskop_digital.util.ArrayReceiver
 import com.apicta.stetoskop_digital.util.BluetoothSocketHolder
@@ -43,6 +42,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.time.LocalDateTime
@@ -66,30 +66,32 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
         private val mmInStream: InputStream = socket.inputStream
         private val mmBuffer: ByteArray = ByteArray(BUFFER_SIZE)
 
-        private lateinit var file: File
-        private lateinit var mmFileOutStream: FileOutputStream
-        private val contextWrapper = ContextWrapper(requireContext())
+        private val byteArrayOutputStream = ByteArrayOutputStream()
+        private lateinit var data: ByteArray
 
         private var isOn = switch
 
-//        private val byteArrayOutputStream = ByteArrayOutputStream()
+        private var dataSize = 0
 
 
         override fun run() {
 
-
-            var numBytes: Int
+            var numBytes: Int = 0
 
             while (isOn){
-                numBytes = try {
-                    mmInStream.read(mmBuffer)
+                try {
+                    numBytes = mmInStream.read(mmBuffer)
+                    byteArrayOutputStream.write(mmBuffer, 0, numBytes)
                 } catch (e: IOException){
                     Log.d(TAG, "Input stream was disconnected", e)
                     break
                 }
+                dataSize += numBytes
                 Log.d(TAG, "numBytes: $numBytes")
+                Log.d(TAG, "dataSize: $dataSize")
 
                 activity?.runOnUiThread {
+
                     val currentTime = System.currentTimeMillis()
                     if (startTime == 0L){
                         startTime = currentTime
@@ -101,8 +103,6 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
                         startTime = currentTime
                         Log.d(TAG, "pcgArray: ${ArrayReceiver.pcgArray}")
                         Log.d(TAG, "timeArray: ${ArrayReceiver.timeArray}")
-//                        ArrayReceiver.pcgArray.clear()
-//                        ArrayReceiver.timeArray.clear()
                         isOn = false
 
                         ArrayReceiver.pcgArrayNormalize = ArrayStandardization.standardizationFloatArrayList(ArrayReceiver.pcgArray)
@@ -110,52 +110,89 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
 
                         val contentValues = ContentValues()
                         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "${System.currentTimeMillis()}-${binding.fileName.text}.wav")
-                        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/x-wav")
+                        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav")
 
                         val contentResolver = context?.contentResolver
                         val uri = contentResolver?.insert(Media.EXTERNAL_CONTENT_URI, contentValues)
 
-                        uri?.let { mediaUri ->
-                            try {
-                                val outputStream = contentResolver.openOutputStream(mediaUri)
-                                outputStream?.use { stream ->
-                                    FloatArrayListToWav.writeWavHeader(stream, ArrayReceiver.pcgArray.size * 8, SAMPLE_RATE, 8)
-                                    for (value in ArrayReceiver.pcgArrayNormalize) {
-                                        val shortValue = (value * 32767.0f).toInt().toShort()
-                                        val bytes: ByteArray = shortToBytes(shortValue)
-                                        stream.write(bytes)
-                                    }
-                                }
-                                Log.d(TAG, "File saved to: $mediaUri")
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        }
-                        val externalStorage: File = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-                        } else {
-                            contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-                        }
-                        Log.d(TAG, "externalStorage: $externalStorage")
-                        file = File(externalStorage, System.currentTimeMillis().toString() + "-" + binding.fileName.text.toString() + ".wav")
+                        val desiredByteCount = ArrayReceiver.timeArray.last().toInt() * SAMPLE_RATE
+                        Log.d(TAG, "desiredByCount: $desiredByteCount")
+                        Log.d(TAG, "lastTime: ${ArrayReceiver.timeArray.last().toInt()}")
+
+                        data = byteArrayOutputStream.toByteArray()
+                        val wavData: ByteArray = Wav.generateWavHeader(data, CHANNEL_CONFIG, SAMPLE_RATE, AUDIO_FORMAT)
+
                         try {
-                            mmFileOutStream = FileOutputStream(file)
-
-                            FloatArrayListToWav.writeWavHeader(mmFileOutStream, ArrayReceiver.pcgArray.size * 8, SAMPLE_RATE, 8)
-
-                            for (value in ArrayReceiver.pcgArrayNormalize) {
-                                val shortValue =
-                                    (value * 32767.0f).toInt().toShort()
-                                val bytes: ByteArray = shortToBytes(shortValue)
-                                mmFileOutStream.write(bytes)
+                            val outputStream: OutputStream = contentResolver?.openOutputStream(uri!!)!!
+                            if (desiredByteCount <= wavData.size){
+//                                outputStream.write(wavData)
+                                outputStream.write(wavData, 0, desiredByteCount)
+                                Log.d(TAG, "run: execute A")
+                            } else {
+                                outputStream.write(wavData)
+                                Log.d(TAG, "run: execute B")
                             }
-
-                            mmFileOutStream.close()
-
+                            outputStream.close()
+                            Log.d(TAG, "File saved to: $uri")
+                            Toast.makeText(requireContext(), "File saved to: $uri", Toast.LENGTH_SHORT).show()
                         } catch (e: IOException){
                             e.printStackTrace()
                         }
-//                        return@runOnUiThread
+
+
+//                        uri?.let {  mediaUri ->
+//                            try {
+//                                byteArrayOutputStream.use {  byteArrayOutputStream ->
+//                                    data = byteArrayOutputStream.toByteArray()
+//
+//                                    mmFileOutStream = FileOutputStream("${System.currentTimeMillis()}_${binding.fileName.text!!.trim().toString()}")
+//                                    Wav.writeWavHeader(mmFileOutStream, CHANNEL_CONFIG, SAMPLE_RATE, AUDIO_FORMAT)
+//                                    mmFileOutStream.write(data)
+//                                    mmFileOutStream.close()
+//
+//                                    Log.d(TAG, "File saved to: $mmFileOutStream")
+//                                    Toast.makeText(requireContext(), "File saved to: $mmFileOutStream", Toast.LENGTH_SHORT).show()
+//                                }
+//                            } catch (e: IOException){
+//                                e.printStackTrace()
+//                            }
+//                        }
+
+//                        uri?.let { mediaUri ->
+//                            try {
+//                                contentResolver.openOutputStream(mediaUri).use { outputStream ->
+//                                    FloatArrayListToWav.createWavHeader(outputStream, SAMPLE_RATE, 8, CHANNEL_CONFIG, ArrayReceiver.timeArray.last().toInt())
+//                                    byteArrayOutputStream.writeTo(outputStream)
+//                                }
+//                                Log.d(TAG, "File saved to: $mediaUri")
+//                                Toast.makeText(requireContext(), "File saved to: $mediaUri", Toast.LENGTH_SHORT).show()
+//                            } catch (e: IOException){
+//                                e.printStackTrace()
+//                            } finally {
+//                                byteArrayOutputStream.close()
+//                            }
+//                        }
+
+                        // write the wav file here with mediastore
+
+//                        val contentResolver = context?.contentResolver
+//                        val uri = contentResolver?.insert(Media.EXTERNAL_CONTENT_URI, contentValues)
+
+//                        uri?.let { mediaUri ->
+//                            try {
+//                                val outputStream = contentResolver.openOutputStream(mediaUri)
+//
+//                                outputStream?.use { stream ->
+//                                    Log.d(TAG, "stream: $stream")
+//                                    FloatArrayListToWav.createWavHeader(stream, SAMPLE_RATE, 8, CHANNEL_CONFIG, ArrayReceiver.timeArray.last().toInt())
+//                                    // write here
+//                                }
+//                                Log.d(TAG, "File saved to: $mediaUri")
+//                                Toast.makeText(requireContext(), "File saved to: $mediaUri", Toast.LENGTH_SHORT).show()
+//                            } catch (e: IOException) {
+//                                e.printStackTrace()
+//                            }
+//                        }
                     }
 
                     val receivedInt = ByteBuffer.wrap(mmBuffer, 0, numBytes).order(ByteOrder.LITTLE_ENDIAN).int
@@ -166,307 +203,17 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
                     updateChart()
                 }
             }
-//            super.run()
         }
-
-        private fun getOutputPath(): String {
-            val storageDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                context?.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)
-            } else {
-                context?.getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-            }
-
-            val fileName = "${System.currentTimeMillis()}_BluetoothRecording.wav"
-            return "${storageDir?.absolutePath}/$fileName"
-        }
-
-        private fun saveToMediaStore(filePath: String) {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "BluetoothRecording.wav")
-                put(MediaStore.MediaColumns.MIME_TYPE, "audio/x-wav")
-            }
-
-            val contentResolver = context?.contentResolver
-            val uri = contentResolver?.insert(Media.EXTERNAL_CONTENT_URI, contentValues)
-
-            uri?.let { mediaUri ->
-                try {
-                    val outputStream = contentResolver.openOutputStream(mediaUri)
-                    outputStream?.use { stream ->
-                        val file = File(filePath)
-                        val fileInputStream = file.inputStream()
-                        fileInputStream.copyTo(stream)
-                    }
-                    Log.d("BluetoothDataRecorder", "File saved to: $mediaUri")
-                } catch (e: IOException) {
-                    Log.e("BluetoothDataRecorder", "Error saving to MediaStore", e)
-                }
-            }
-        }
-
-//        suspend fun cancel() = withContext(Dispatchers.IO) {
-//            try {
-//                mmSocket.close()
-//                val receivedData = byteArrayOutputStream.toByteArray()
-//                Log.d(TAG, "cancel: ${decodeByteArrayToInt(receivedData)}")
-//
-//                val wavData = PcmToWav.pcmToWav(receivedData, 1, SAMPLE_RATE, 8)
-//                val externalStorage: File = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                    contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-//                } else {
-//                    contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-//                }
-//
-//                try {
-//                    val outputFile = File(externalStorage, "${binding.fileName}_${System.currentTimeMillis()}.wav")
-//                    val deferredResult = async {
-//                        FileOutputStream(outputFile).use { fos ->
-//                            fos.write(wavData)
-//                        }
-//                        Log.d(TAG, "cancel: finish creating wav file")
-//                    }
-//
-//                    deferredResult.await() // Menunggu hingga file WAV selesai dibuat
-//                    withContext(Dispatchers.Main) {
-//                        activity?.runOnUiThread {
-//                            Toast.makeText(requireContext(), "File saved successfully", Toast.LENGTH_SHORT).show()
-//                        }
-//                    }
-//                } catch (e: Exception) {
-//                    withContext(Dispatchers.Main) {
-//                        activity?.runOnUiThread {
-//                            Toast.makeText(requireContext(), "Cannot create wav file", Toast.LENGTH_SHORT).show()
-//                        }
-//                    }
-//                    Log.d(TAG, "cancel: $e")
-//                }
-//            } catch (e: IOException) {
-//                Log.e(TAG, "Could not close the connect socket", e)
-//            }
-//        }
-
 
         fun cancel(){
             try {
                 mmSocket.close()
-////                // Setelah memanggil cancel, Anda dapat mengambil data dari byteArrayOutputStream
-////                val receivedData = byteArrayOutputStream.toByteArray()
-////                Log.d(TAG, "cancel: ${decodeByteArrayToInt(receivedData)}")
-////
-////                GlobalScope.launch(Dispatchers.IO) {
-////                    try {
-////                        // Sekarang Anda dapat mengkonversi data ini menjadi file WAV, jika diperlukan
-////                        val wavData = PcmToWav.pcmToWav(receivedData, 1, SAMPLE_RATE, 8)
-////
-////                        // Simpan ke file WAV jika diperlukan
-//////                val file = File(Environment.getExternalStorageDirectory(), "${binding.fileName}_${System.currentTimeMillis()}.wav")
-////                        val externalStorage: File = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-////                            contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-////                        } else {
-////                            contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-////                        }
-////                        try {
-////                            val outputFile = File(externalStorage, "${binding.fileName}_${System.currentTimeMillis()}.wav")
-////                            FileOutputStream(outputFile).use { fos ->
-////                                fos.write(wavData)
-////                            }
-////                            deferredResult.await()
-////                            Log.d(TAG, "cancel: finish creating wav file")
-////                            withContext(Dispatchers.Main) {
-////                                // Any UI updates or further processing after file save
-////                                // For example, show a toast message.
-////                                activity?.runOnUiThread {
-////                                    Toast.makeText(requireContext(), "File saved successfully", Toast.LENGTH_SHORT).show()
-////                                }}
-////                        } catch (e: Exception){
-////                            withContext(Dispatchers.Main){
-////                                activity?.runOnUiThread {
-////                                    Toast.makeText(requireContext(), "Cannot create wav file", Toast.LENGTH_SHORT).show()
-////                                }
-////                            }
-////                            Log.d(TAG, "cancel: $e")
-////                        }
-//////                val outputFile = File(externalStorage, "${binding.fileName}_${System.currentTimeMillis()}.wav")
-//////                FileOutputStream(outputFile).use { fos ->
-//////                    fos.write(wavData)
-//////                }
-////                    } catch (e: Exception){
-////                        withContext(Dispatchers.Main){
-////                            activity?.runOnUiThread {
-////                                Toast.makeText(requireContext(), "Error saving file: ${e.message}", Toast.LENGTH_SHORT).show()
-////                            }
-////                        }
-////                        Log.d(TAG, "cancel: ${e.message}")
-////                    }
-////                }
             } catch (e: IOException){
                 Log.e(TAG, "Could not close the connect socket", e)
             }
         }
 
     }
-
-//    @RequiresApi(Build.VERSION_CODES.M)
-//    inner class ThreadConnected(socket: BluetoothSocket): Thread() {
-//        private val connectedInputStream: InputStream?
-//        private val connectedOutputStream: FileOutputStream?
-//        private val connectedSocket: BluetoothSocket
-//        private val buffer = ByteArray(BUFFER_SIZE)
-//
-//        init {
-//            var `in`: InputStream? = null
-//            var out: FileOutputStream? = null
-//            connectedSocket = socket
-//            try {
-//                `in` = socket.inputStream
-//            } catch (e: IOException){
-//                e.printStackTrace()
-//            }
-//
-//            if (isExtStorageWritable() && checkPermission()){
-//                try {
-//                    f
-////                    val audioDir = contextWrapper.getExternalFilesDir("sample wav")
-//                    val audioDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                        contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-//                    } else {
-//                        contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-//                    }
-////                    val files = File(audioDir, "sample.wav")
-//                    val files = File(audioDir, System.currentTimeMillis().toString() + "-" + binding.fileName.text.toString() + ".wav")
-//                    out = FileOutputStream(files)
-//                    writeWavHeader(out)
-//                } catch (e: Exception){
-//                    Toast.makeText(requireContext(), "$e", Toast.LENGTH_SHORT).show()
-//                }
-//            } else {
-//                Toast.makeText(requireContext(), "Can't write data", Toast.LENGTH_SHORT).show()
-//            }
-//            connectedInputStream = `in`
-//            connectedOutputStream = out
-//        }
-//
-//        @RequiresApi(Build.VERSION_CODES.O)
-//        override fun run() {
-////            val buffer = ByteArray(BUFFER_SIZE)
-//            var bytesRead = 0
-//            var audioLength: Long = 0
-//            val byteArrayOutputStream = ByteArrayOutputStream()
-//
-//            Log.d(TAG, "run: $buffer")
-//
-//            audioLength += (44 - 8).toLong()
-//            try {
-//                while (bytesRead != -1){
-//                    bytesRead = connectedInputStream!!.read(buffer)
-//                    Log.d(TAG, "run bytesRead: $bytesRead")
-//                    if (bytesRead != -1) {
-//                        connectedOutputStream!!.write(buffer, 0, bytesRead)
-//                        byteArrayOutputStream.write(buffer, 0, bytesRead)
-//                        audioLength += bytesRead.toLong()
-//                    }
-//                }
-//            } catch (e: IOException){
-//                try {
-//                    val contextWrapper = ContextWrapper(requireContext())
-////                    val file = contextWrapper.getExternalFilesDir("sample wav")
-//                    val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                        contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-//                    } else {
-//                        contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-//                    }
-//                    val audioFileAbsolutePath = file.absolutePath + "/sample.wav"
-//                    val normalizeAudio = NormalizeAudio()
-//                    normalizeAudio.normalize(audioFileAbsolutePath, binding.fileName.text.toString(), requireContext())
-//                    connectedOutputStream!!.close()
-//                } catch (e: IOException){
-//                    throw RuntimeException(e)
-//                }
-//                e.printStackTrace()
-//            }
-//        }
-//
-//        @RequiresApi(Build.VERSION_CODES.O)
-//        fun cancel(){
-//            try {
-//                val contextWrapper = ContextWrapper(requireContext())
-////                val file = contextWrapper.getExternalFilesDir("sample wav")
-//                val file = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                    contextWrapper.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS)!!
-//                } else {
-//                    contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC)!!
-//                }
-//                val audioFileAbsolutePath = file.absolutePath +"/sample.wav"
-//                val normalizeAudio = NormalizeAudio()
-//                normalizeAudio.normalize(audioFileAbsolutePath, binding.fileName.text.toString(), requireContext())
-//                connectedOutputStream!!.close()
-//                connectedSocket.close()
-//            } catch (e: IOException){
-//                e.printStackTrace()
-//            }
-//        }
-//    }
-
-//    private var startTime: Long = 0
-
-//    val timeArrayChart: ArrayList<Float> by lazy { ArrayList() }
-//    val audioChart: ArrayList<Float> by lazy { ArrayList() }
-
-//    private lateinit var connection: Connection
-//    private val connectionListener: BluetoothListener.onConnectionListener = object :
-//        BluetoothListener.onConnectionListener {
-//        override fun onConnectionStateChanged(socket: BluetoothSocket?, state: Int) {
-//            when(state){
-//                Connection.CONNECTING -> {
-//                    Toast.makeText(requireContext(), "Connecting...", Toast.LENGTH_SHORT).show()
-//                }
-//                Connection.CONNECTED -> {
-//                    Toast.makeText(requireContext(), "Connected!", Toast.LENGTH_SHORT).show()
-//                }
-//                Connection.DISCONNECTED -> {
-//                    Toast.makeText(requireContext(), "Disconnected", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        }
-//
-//        override fun onConnectionFailed(errorCode: Int) {
-//            when(errorCode){
-//                Connection.SOCKET_NOT_FOUND -> {
-//                    Toast.makeText(requireContext(), "Socket not Found", Toast.LENGTH_SHORT).show()
-//                }
-//                Connection.CONNECT_FAILED -> {
-//                    Toast.makeText(requireContext(), "Connect failed", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        }
-//    }
-//    private val receiveListener: BluetoothListener.onReceiveListener = object :
-//        BluetoothListener.onReceiveListener {
-//        override fun onReceived(receivedData: String?) {
-//            Log.d(TAG, "onReceived: $receivedData")
-//            if (receivedData!!.trim().isDigitsOnly()){
-//                val currentTime = System.currentTimeMillis()
-//                if (startTime == 0L){
-//                    startTime = currentTime
-//                }
-//                val elapsedTime = currentTime - startTime
-//                val elapsedTimeFloat = millisToSeconds(elapsedTime)
-//
-//                if (elapsedTime >= 15.0){
-//                    startTime = currentTime
-//                    timeArrayChart.clear()
-//                    audioChart.clear()
-//                }
-//                Log.d(TAG, "onReceived: Sampai Sini")
-//                audioChart.add(receivedData.toFloat())
-//                timeArrayChart.add(elapsedTimeFloat)
-//                Log.d(TAG, "audioChart: $audioChart")
-//                Log.d(TAG, "timeArrayChart: $timeArrayChart")
-//
-//                updateChart()
-//            }
-//        }
-//    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -558,6 +305,7 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
         }
     }
 
+
     private fun getLatestWavFile(audioDirPath: String): File? {
         val dir = File(audioDirPath)
 
@@ -615,124 +363,10 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
         return Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()
     }
 
-//    private fun writeWavHeader(outputStream: FileOutputStream) {
-//        val audioDataLength = outputStream.channel.size() - 44 // Subtract header size
-//        val overallSize = audioDataLength + 36 // Add header size
-//        val header = ByteArray(44)
-//
-//        // RIFF chunk descriptor
-//        header[0] = 'R'.code.toByte()
-//        header[1] = 'I'.code.toByte()
-//        header[2] = 'F'.code.toByte()
-//        header[3] = 'F'.code.toByte()
-//
-//        // Overall size (file size - 8 bytes for RIFF and WAVE tags)
-//        header[4] = (overallSize and 0xffL).toByte()
-//        header[5] = (overallSize shr 8 and 0xffL).toByte()
-//        header[6] = (overallSize shr 16 and 0xffL).toByte()
-//        header[7] = (overallSize shr 24 and 0xffL).toByte()
-//
-//        // WAVE chunk
-//        header[8] = 'W'.code.toByte()
-//        header[9] = 'A'.code.toByte()
-//        header[10] = 'V'.code.toByte()
-//        header[11] = 'E'.code.toByte()
-//
-//        // fmt sub-chunk
-//        header[12] = 'f'.code.toByte() // Sub-chunk identifier
-//        header[13] = 'm'.code.toByte()
-//        header[14] = 't'.code.toByte()
-//        header[15] = ' '.code.toByte() // Chunk size
-//        header[16] = 16
-//        header[17] = 0
-//        header[18] = 0
-//        header[19] = 0
-//        // Audio format (PCM = 1)
-//        header[20] = 1
-//        header[21] = 0
-//
-//        // Number of channels (2 = stereo)
-//        header[22] = (if (CHANNEL_CONFIG == AudioFormat.CHANNEL_IN_MONO) 1 else 2).toByte()
-//        header[23] = 0
-//
-//        // Sample rate
-//        header[24] = (SAMPLE_RATE and 0xff).toByte()
-//        header[25] = (SAMPLE_RATE shr 8 and 0xff).toByte()
-//        header[26] = (SAMPLE_RATE shr 16 and 0xff).toByte()
-//        header[27] = (SAMPLE_RATE shr 24 and 0xff).toByte()
-//
-//        // Byte rate (Sample rate * Number of channels * Bits per sample / 8)
-//        val byteRate = SAMPLE_RATE * (if (CHANNEL_CONFIG == AudioFormat.CHANNEL_IN_MONO) 1 else 2) * if (AUDIO_FORMAT == AudioFormat.ENCODING_PCM_16BIT) 2 else 1
-//        header[28] = (byteRate and 0xff).toByte()
-//        header[29] = (byteRate shr 8 and 0xff).toByte()
-//        header[30] = (byteRate shr 16 and 0xff).toByte()
-//        header[31] = (byteRate shr 24 and 0xff).toByte()
-//
-//        // Block align (Number of channels * Bits per sample / 8)
-//        header[32] = ((if (CHANNEL_CONFIG == AudioFormat.CHANNEL_IN_MONO) 1 else 2) * if (AUDIO_FORMAT == AudioFormat.ENCODING_PCM_16BIT) 2 else 1).toByte()
-//        header[33] = 0
-//
-//        // Bits per sample
-//        header[34] = (if (AUDIO_FORMAT == AudioFormat.ENCODING_PCM_16BIT) 16 else 8).toByte()
-//        header[35] = 0
-//
-//        // data sub-chunk
-//        header[36] = 'd'.code.toByte() // Sub-chunk identifier
-//        header[37] = 'a'.code.toByte()
-//        header[38] = 't'.code.toByte()
-//        header[39] = 'a'.code.toByte() // Chunk size
-//        header[40] = (audioDataLength and 0xffL).toByte()
-//        header[41] = (audioDataLength shr 8 and 0xffL).toByte()
-//        header[42] = (audioDataLength shr 16 and 0xffL).toByte()
-//        header[43] = (audioDataLength shr 24 and 0xffL).toByte()
-//        outputStream.write(header)
-//    }
-
-//    private fun initUi() {
-//        initViewChart()
-//        binding.record.setOnClickListener {
-////            connectDevice(deviceAddress, connectionListener, receiveListener)
-//        }
-//
-//    }
-
     private fun initViewChart(){
         binding.signalView.description.text = "Raw PCG"
         binding.signalView.setNoDataText("Record Not Started")
     }
-
-//    private fun updateChart() {
-//        activity?.runOnUiThread {
-//            val dataValues: ArrayList<Entry> = ArrayList()
-//            for ((time, audio) in ArrayReceiver.timeArray.zip(ArrayReceiver.pcgArray)){
-//                if (time <= 3){
-//                    dataValues.add(Entry(time, audio))
-//                }
-//            }
-//            val lineDataset = LineDataSet(dataValues, "PCG")
-//            lineDataset.setDrawCircles(false)
-//            lineDataset.setDrawValues(false)
-//
-//            val dataset: ArrayList<ILineDataSet> = ArrayList()
-//            dataset.add(lineDataset)
-//
-//            val data = LineData(dataset)
-//            binding.signalView.data = data
-//
-//            val lastXValue = ArrayReceiver.pcgArray.last()
-//            if (lastXValue >= 5f) {
-//                val nextMultipleOf5 = ((lastXValue / 5).toInt() + 1) * 5
-//                binding.signalView.setVisibleXRange(5f, nextMultipleOf5.toFloat())
-//            } else {
-//                binding.signalView.setVisibleXRange(0f, 2f)
-//            }
-//
-//            binding.signalView.xAxis.isEnabled = true
-//            binding.signalView.axisLeft.isEnabled = false
-//            binding.signalView.axisRight.isEnabled = false
-//            binding.signalView.invalidate()
-//        }
-//    }
 
     private fun updateChart() {
         val dataValues: ArrayList<Entry> = ArrayList()
@@ -764,11 +398,6 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
     fun millisToSeconds(millis: Long): Float {
         return (millis / 1000.0).toFloat().let { "%.3f".format(it).toFloat() }
     }
-//
-//    private fun connectDevice(deviceAddress: String, onConnectionListener: BluetoothListener.onConnectionListener, receiveListener: BluetoothListener.onReceiveListener) {
-////        connection = Connection(requireContext())
-////        connection.connect(deviceAddress, true, onConnectionListener, receiveListener)
-//    }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -783,12 +412,14 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
     companion object{
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
-        private const val SAMPLE_RATE = 8000
+        private const val SAMPLE_RATE = 44100
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
-        private const val BUFFER_SIZE = 1024
-//        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
-        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT
-//        private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+        // encoding float ok but time not ok
+        //
+        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
+        private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+//        private const val BUFFER_SIZE = 1024
+
 
     }
 }

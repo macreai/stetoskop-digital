@@ -23,7 +23,7 @@ public class PcmToWav {
      * @param bitPerSample 单次数据长度, 例如8bits
      * @return wav头部信息
      */
-    public static byte[] wavHeader(int pcmLen, int numChannels, int sampleRate, int bitPerSample) {
+    private static byte[] wavHeader(int pcmLen, int numChannels, int sampleRate, int bitPerSample) {
         byte[] header = new byte[44];
         // ChunkID, RIFF, 占4bytes
         header[0] = 'R';
