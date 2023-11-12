@@ -73,7 +73,6 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
 
         private var dataSize = 0
 
-
         override fun run() {
 
             var numBytes: Int = 0
@@ -104,10 +103,7 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
                         Log.d(TAG, "pcgArray: ${ArrayReceiver.pcgArray}")
                         Log.d(TAG, "timeArray: ${ArrayReceiver.timeArray}")
                         isOn = false
-
-                        ArrayReceiver.pcgArrayNormalize = ArrayStandardization.standardizationFloatArrayList(ArrayReceiver.pcgArray)
-                        Log.d(TAG, "pcgArrayNormalize: ${ArrayReceiver.pcgArrayNormalize}")
-
+                        
                         val contentValues = ContentValues()
                         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "${System.currentTimeMillis()}-${binding.fileName.text}.wav")
                         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav")
@@ -412,7 +408,7 @@ class RecordPatientFragment : Fragment()/*, OnSocketConnectedListener */ {
     companion object{
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
-        private const val SAMPLE_RATE = 44100
+        private const val SAMPLE_RATE = 36000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         // encoding float ok but time not ok
         //
