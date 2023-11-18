@@ -9,13 +9,12 @@ import com.apicta.stetoskop_digital.databinding.ItemDeviceBinding
 import com.apicta.stetoskop_digital.listener.PairedDeviceListener
 
 @SuppressLint("MissingPermission")
-class PairedDeviceAdapter(private val devices: ArrayList<BluetoothDevice>): RecyclerView.Adapter<PairedDeviceAdapter.ViewHolder>() {
+class DeviceAdapter(private val devices: ArrayList<BluetoothDevice>): RecyclerView.Adapter<DeviceAdapter.ViewHolder>() {
 
-    private var scanDeviceListener: PairedDeviceListener? = null
-//    private var index = -1
+    private var pairedDeviceListener: PairedDeviceListener? = null
 
-    fun setOnClickListener(scanDeviceListener: PairedDeviceListener){
-        this.scanDeviceListener = scanDeviceListener
+    fun setOnClickListener(pairedDeviceListener: PairedDeviceListener){
+        this.pairedDeviceListener = pairedDeviceListener
     }
 
     class ViewHolder(private val binding: ItemDeviceBinding): RecyclerView.ViewHolder(binding.root) {
@@ -34,7 +33,7 @@ class PairedDeviceAdapter(private val devices: ArrayList<BluetoothDevice>): Recy
        holder.bind(devices[position])
 
         holder.itemView.setOnClickListener {
-            scanDeviceListener?.onClick(devices[holder.adapterPosition])
+            pairedDeviceListener?.onClick(devices[holder.adapterPosition])
         }
     }
 

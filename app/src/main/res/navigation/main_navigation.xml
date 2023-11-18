@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_navigation"
-    app:startDestination="@id/homePatientFragment">
+    app:startDestination="@id/loginFragment">
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.apicta.stetoskop_digital.view.LoginFragment"
@@ -22,8 +22,11 @@
         android:label="fragment_home_patient"
         tools:layout="@layout/fragment_home_patient" >
         <action
-            android:id="@+id/action_homePatientFragment_to_listDeviceFragment"
-            app:destination="@id/listDeviceFragment" />
+            android:id="@+id/action_homePatientFragment_to_deviceFragment"
+            app:destination="@id/deviceFragment" />
+        <action
+            android:id="@+id/action_homePatientFragment_to_recordPatientFragment"
+            app:destination="@id/recordPatientFragment" />
     </fragment>
     <fragment
         android:id="@+id/homeDoctorFragment"
@@ -31,17 +34,18 @@
         android:label="fragment_home_doctor"
         tools:layout="@layout/fragment_home_doctor" />
     <fragment
-        android:id="@+id/listDeviceFragment"
-        android:name="com.apicta.stetoskop_digital.view.patient.ListDeviceFragment"
-        android:label="fragment_list_device"
-        tools:layout="@layout/fragment_list_device" >
-        <action
-            android:id="@+id/action_listDeviceFragment_to_recordPatientFragment"
-            app:destination="@id/recordPatientFragment2" />
-    </fragment>
-    <fragment
-        android:id="@+id/recordPatientFragment2"
+        android:id="@+id/recordPatientFragment"
         android:name="com.apicta.stetoskop_digital.view.patient.RecordPatientFragment"
         android:label="fragment_record_patient"
         tools:layout="@layout/fragment_record_patient" />
+    <fragment
+        android:id="@+id/patientMainFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.PatientMainFragment"
+        android:label="fragment_patient_main"
+        tools:layout="@layout/fragment_patient_main" />
+    <fragment
+        android:id="@+id/deviceFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.DeviceFragment"
+        android:label="fragment_device"
+        tools:layout="@layout/fragment_device" />
 </navigation>

@@ -7,14 +7,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.activityViewModels
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.apicta.stetoskop_digital.R
+import com.apicta.stetoskop_digital.dataStore
 import com.apicta.stetoskop_digital.databinding.FragmentLoginBinding
 import com.apicta.stetoskop_digital.viewmodel.AuthViewModel
+import com.apicta.stetoskop_digital.viewmodel.ViewModelFactory
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment() {
@@ -24,7 +27,7 @@ class LoginFragment : Fragment() {
 
     private var loginJob: Job = Job()
 
-    private val viewModel: AuthViewModel by activityViewModels()
+    private val viewModel: AuthViewModel by viewModels { ViewModelFactory(requireContext().dataStore) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,8 +37,18 @@ class LoginFragment : Fragment() {
         val view = binding.root
 
         login()
+        checkLoginUser()
 
         return view
+    }
+
+    private fun checkLoginUser(){
+        viewModel.getId().observe(viewLifecycleOwner, Observer { id ->
+            if (id != 0){
+                Log.d(TAG, "checkLoginUser: $id")
+                view?.findNavController()?.navigate(R.id.action_loginFragment_to_homePatientFragment)
+            }
+        })
     }
 
     private fun login() {
@@ -49,8 +62,11 @@ class LoginFragment : Fragment() {
                 } else {
                     if (loginJob.isActive) loginJob.cancel()
                     loginJob = launch {
-                        viewModel.patientLogin(email, password).collect{ result ->
+                        viewModel.login(email, password).collect{ result ->
                             result.onSuccess { loginResponse ->
+                                viewModel.saveId(loginResponse.user?.id!!)
+                                Log.d(TAG, "login: ${loginResponse.user?.id.toString()}")
+                                viewModel.saveToken(loginResponse.authorisation!!.token!!)
                                 if (loginResponse.status == "success" && loginResponse.user?.role == "pasien"){
                                     Log.d(TAG, "login: $loginResponse")
                                     Toast.makeText(requireContext(), "Login success", Toast.LENGTH_SHORT).show()
@@ -64,13 +80,24 @@ class LoginFragment : Fragment() {
                             result.onFailure { throwable ->
                                 Log.e(TAG, "login: $throwable")
                                 throwable.printStackTrace()
-                                Toast.makeText(requireContext(), "Invalid to Connect", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), "Failed to Connect", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val callback = object : OnBackPressedCallback(true){
+            override fun handleOnBackPressed() {
+                requireActivity().finish()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
     override fun onDestroy() {
