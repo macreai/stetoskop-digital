@@ -109,7 +109,6 @@ class DetailFileFragment : Fragment() {
     }
 
     private fun initPlayer(url: String?){
-        binding.playerView.setKeepContentOnPlayerReset(true)
         simpleExoPlayer = ExoPlayer.Builder(requireContext()).build()
         binding.playerView.player = simpleExoPlayer
         val mediaItem = MediaItem.Builder()

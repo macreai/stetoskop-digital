@@ -172,6 +172,7 @@ class RecordPatientFragment : Fragment() {
             postJob = launch {
                 audioViewModel.postWav(idRequestBody, wavFilePart).collect{ result ->
                     result.onSuccess {  response ->
+                        binding.loading.visibility = View.GONE
                         Log.d(TAG, "jenis: ${response.data?.jenis}")
                         Log.d(TAG, "result: ${response.data?.result}")
                         binding.tvStatus.text = "Result"
@@ -190,8 +191,9 @@ class RecordPatientFragment : Fragment() {
                         }
                     }
                     result.onFailure {  throwable ->
+                        binding.loading.visibility = View.GONE
                         Log.d(TAG, "throwable: $throwable")
-                        binding.statusResult.text = throwable.toString()
+                        binding.statusResult.text = "Error -- Try Again"
                     }
                 }
             }
@@ -424,6 +426,7 @@ class RecordPatientFragment : Fragment() {
 
             override fun onFinish() {
                 binding.statusResult.text = "Please wait, we're analyzing your record.."
+                binding.loading.visibility = View.VISIBLE
                 binding.cardView.visibility = View.VISIBLE
             }
         }
@@ -445,8 +448,8 @@ class RecordPatientFragment : Fragment() {
     companion object{
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
-        private const val CUTOFF_FREQUENCY = 4000.0
-        private const val SAMPLE_RATE = 24_000
+//        private const val CUTOFF_FREQUENCY = 4000.0
+        private const val SAMPLE_RATE = 36_000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)

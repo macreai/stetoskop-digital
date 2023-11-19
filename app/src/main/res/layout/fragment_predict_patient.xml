@@ -7,6 +7,17 @@
     android:background="@color/white"
     tools:context=".view.patient.PredictPatientFragment">
 
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:scaleType="fitXY"
+        android:src="@drawable/list_wave"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <ImageView
         android:id="@+id/back"
         android:layout_width="wrap_content"
