@@ -8,7 +8,6 @@ object BluetoothSocketHolder {
 
     fun setBluetoothSocket(socket: BluetoothSocket) {
         bluetoothSocket = socket
-//        Log.d("BluetoothSocketHolder", "setBluetoothSocket: $bluetoothSocket")
     }
 
     fun getBluetoothSocket(): BluetoothSocket? {

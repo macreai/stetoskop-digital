@@ -1,12 +1,13 @@
 package com.apicta.stetoskop_digital.model.remote.api
 
 import com.apicta.stetoskop_digital.BuildConfig
-import com.apicta.stetoskop_digital.model.local.AuthRepository
+import com.apicta.stetoskop_digital.repo.AuthRepository
 import com.apicta.stetoskop_digital.model.local.UserPreference
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object ApiConfig {
     fun getApiService(preference: UserPreference): ApiService{
@@ -18,6 +19,9 @@ object ApiConfig {
         val client = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(AuthRepository(preference))
+            .connectTimeout(90, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
             .build()
         val retrofit = Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)

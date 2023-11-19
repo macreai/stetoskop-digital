@@ -14,13 +14,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.apicta.stetoskop_digital.adapter.DeviceAdapter
 import com.apicta.stetoskop_digital.databinding.FragmentListDeviceBinding
-import com.apicta.stetoskop_digital.listener.PairedDeviceListener
+import com.apicta.stetoskop_digital.listener.DeviceListener
 import com.apicta.stetoskop_digital.util.BluetoothSocketHolder
 import com.apicta.stetoskop_digital.viewmodel.BluetoothViewModel
 import com.psp.bluetoothlibrary.Bluetooth
-import com.psp.bluetoothlibrary.BluetoothListener
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.UUID
 
@@ -121,7 +118,7 @@ class PairedDeviceFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = deviceAdapter
         }
-        deviceAdapter.setOnClickListener(object : PairedDeviceListener {
+        deviceAdapter.setOnClickListener(object : DeviceListener {
             @SuppressLint("MissingPermission")
             override fun onClick(device: BluetoothDevice) {
                 Toast.makeText(requireContext(), "Connecting to ${device.name}..", Toast.LENGTH_SHORT).show()

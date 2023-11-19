@@ -15,6 +15,9 @@
         <action
             android:id="@+id/action_loginFragment_to_homeDoctorFragment"
             app:destination="@id/homeDoctorFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
     </fragment>
     <fragment
         android:id="@+id/homePatientFragment"
@@ -27,6 +30,9 @@
         <action
             android:id="@+id/action_homePatientFragment_to_recordPatientFragment"
             app:destination="@id/recordPatientFragment" />
+        <action
+            android:id="@+id/action_homePatientFragment_to_predictPatientFragment"
+            app:destination="@id/predictPatientFragment" />
     </fragment>
     <fragment
         android:id="@+id/homeDoctorFragment"
@@ -48,4 +54,23 @@
         android:name="com.apicta.stetoskop_digital.view.patient.DeviceFragment"
         android:label="fragment_device"
         tools:layout="@layout/fragment_device" />
+    <fragment
+        android:id="@+id/predictPatientFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.PredictPatientFragment"
+        android:label="fragment_predict_patient"
+        tools:layout="@layout/fragment_predict_patient" >
+        <action
+            android:id="@+id/action_predictPatientFragment_to_detailFileFragment"
+            app:destination="@id/detailFileFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.apicta.stetoskop_digital.view.RegisterFragment"
+        android:label="fragment_register"
+        tools:layout="@layout/fragment_register" />
+    <fragment
+        android:id="@+id/detailFileFragment"
+        android:name="com.apicta.stetoskop_digital.view.patient.DetailFileFragment"
+        android:label="fragment_detail_file"
+        tools:layout="@layout/fragment_detail_file" />
 </navigation>

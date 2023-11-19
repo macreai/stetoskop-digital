@@ -14,26 +14,25 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
-import com.apicta.stetoskop_digital.MainActivity
 import com.apicta.stetoskop_digital.R
 import com.apicta.stetoskop_digital.dataStore
 import com.apicta.stetoskop_digital.databinding.FragmentHomePatientBinding
-import com.apicta.stetoskop_digital.databinding.FragmentLoginBinding
-import com.apicta.stetoskop_digital.databinding.FragmentPatientMainBinding
 import com.apicta.stetoskop_digital.model.remote.response.LogoutResponse
-import com.apicta.stetoskop_digital.view.LoginFragment
+import com.apicta.stetoskop_digital.util.ChartData
+import com.apicta.stetoskop_digital.util.DoctorHolder
 import com.apicta.stetoskop_digital.viewmodel.AuthViewModel
-import com.apicta.stetoskop_digital.viewmodel.BluetoothViewModel
 import com.apicta.stetoskop_digital.viewmodel.ViewModelFactory
 import com.bumptech.glide.Glide
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -104,14 +103,11 @@ class HomePatientFragment : Fragment() {
                 viewModel.getUserById(id).collect{ result ->
                     result.onSuccess {  response ->
                         if (response.status == "success"){
-                            binding.username.text = if (response.user?.namaLengkap.isNullOrEmpty()) {
+                            DoctorHolder.setDoctor(response.data?.namaDokter!!)
+                            binding.username.text = if (response.data?.namaLengkap.isNullOrEmpty()) {
                                 "User"
                             } else {
-                                response.user?.namaLengkap
-                            }
-                            Log.d(TAG, "initUi: ${response.user}")
-                            if (response.user?.gender == "Laki-Laki") {
-//                                binding.profilePhoto.setImageDrawable()
+                                response.data?.namaLengkap
                             }
                         } else {
                             binding.username.text = "Failed to connect"
@@ -134,6 +130,44 @@ class HomePatientFragment : Fragment() {
         binding.record.setOnClickListener {
             view?.findNavController()?.navigate(R.id.action_homePatientFragment_to_recordPatientFragment)
         }
+        binding.seeData.setOnClickListener {
+            view?.findNavController()?.navigate(R.id.action_homePatientFragment_to_predictPatientFragment)
+        }
+        updateChart()
+        initViewChart()
+        binding.currentTime.text = ChartData.getCurrentTime()
+    }
+
+    private fun initViewChart(){
+        binding.signalView.description.text = ""
+        binding.signalView.setNoDataText("Record Not Started")
+    }
+
+    private fun updateChart() {
+        val dataValues: ArrayList<Entry> = ArrayList()
+        for ((time, audio) in ChartData.timeArray.zip(ChartData.pcgArray)) {
+            if (time <= 10.0){
+                dataValues.add(Entry(time, audio))
+            }
+        }
+
+        val lineDataset1 = LineDataSet(dataValues, "PCG")
+        lineDataset1.setDrawCircles(false)
+
+        val dataset: ArrayList<ILineDataSet> = ArrayList()
+        dataset.add(lineDataset1)
+
+        binding.signalView.xAxis.isEnabled = false
+        binding.signalView.axisLeft.isEnabled = false
+        binding.signalView.axisRight.isEnabled = false
+
+        binding.signalView.xAxis.axisMinimum = 0f
+        binding.signalView.xAxis.axisMaximum = 10f
+
+        val data = LineData(dataset)
+        binding.signalView.data = data
+        binding.signalView.notifyDataSetChanged()
+        binding.signalView.invalidate()
     }
 
     private fun showLogoutDialog(){

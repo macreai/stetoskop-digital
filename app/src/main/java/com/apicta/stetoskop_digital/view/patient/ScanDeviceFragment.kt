@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.apicta.stetoskop_digital.adapter.DeviceAdapter
 import com.apicta.stetoskop_digital.databinding.FragmentScanDeviceBinding
-import com.apicta.stetoskop_digital.listener.PairedDeviceListener
+import com.apicta.stetoskop_digital.listener.DeviceListener
 import com.psp.bluetoothlibrary.Bluetooth
 import com.psp.bluetoothlibrary.BluetoothListener
 
@@ -56,7 +56,7 @@ class ScanDeviceFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = deviceAdapter
         }
-        deviceAdapter.setOnClickListener(object : PairedDeviceListener {
+        deviceAdapter.setOnClickListener(object : DeviceListener {
             @SuppressLint("MissingPermission")
             override fun onClick(device: BluetoothDevice) {
                 bluetooth.requestPairDevice(device)

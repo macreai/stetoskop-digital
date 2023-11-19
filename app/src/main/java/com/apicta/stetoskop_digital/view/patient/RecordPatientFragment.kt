@@ -5,15 +5,12 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothSocket
-import android.content.ContentValues
-import android.content.Context
-import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,19 +18,18 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.core.net.toFile
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import com.apicta.stetoskop_digital.R
 import com.apicta.stetoskop_digital.audio.MFCC
 import com.apicta.stetoskop_digital.dataStore
 import com.apicta.stetoskop_digital.databinding.FragmentRecordPatientBinding
 import com.apicta.stetoskop_digital.ml.Model
-import com.apicta.stetoskop_digital.model.local.SaveResult
 import com.apicta.stetoskop_digital.model.local.UserPreference
-import com.apicta.stetoskop_digital.util.ArrayReceiver
+import com.apicta.stetoskop_digital.util.ChartData
 import com.apicta.stetoskop_digital.util.BluetoothSocketHolder
 import com.apicta.stetoskop_digital.util.Wav
 import com.apicta.stetoskop_digital.viewmodel.AudioViewModel
@@ -45,21 +41,17 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.time.LocalDateTime
@@ -73,14 +65,12 @@ class RecordPatientFragment : Fragment() {
 
     private var myThreadConnected: ThreadConnected? = null
 
-    private val userPreference: UserPreference by lazy {
-        UserPreference(requireContext().dataStore)
-    }
-
     private var postJob: Job = Job()
 
     private val bluetoothViewModel: BluetoothViewModel by activityViewModels()
-    private val viewModel: AudioViewModel by viewModels { ViewModelFactory(requireContext().dataStore) }
+    private val audioViewModel: AudioViewModel by viewModels { ViewModelFactory(requireContext().dataStore) }
+    private val authViewModel: AuthViewModel by viewModels { ViewModelFactory(requireContext().dataStore) }
+
 
     private var startTime: Long = 0
 
@@ -97,6 +87,7 @@ class RecordPatientFragment : Fragment() {
 
         private var dataSize = 0
 
+        @RequiresApi(Build.VERSION_CODES.O)
         override fun run() {
 
             var numBytes: Int = 0
@@ -124,8 +115,8 @@ class RecordPatientFragment : Fragment() {
 
                     if (elapsedTimeFloat >= 10.0){
                         startTime = currentTime
-                        Log.d(TAG, "pcgArray: ${ArrayReceiver.pcgArray}")
-                        Log.d(TAG, "timeArray: ${ArrayReceiver.timeArray}")
+                        Log.d(TAG, "pcgArray: ${ChartData.pcgArray}")
+                        Log.d(TAG, "timeArray: ${ChartData.timeArray}")
 
                         isOn = false
 
@@ -136,59 +127,9 @@ class RecordPatientFragment : Fragment() {
 
                         val filePath: String? = Wav.saveWavFile(requireContext(), binding.fileName.text.toString(), SAMPLE_RATE, wavData)
                         if (filePath != null){
-//                            val contentUri = Uri.parse(savedFileUri.uri)
-//                            val inputStream = requireContext().contentResolver.openInputStream(contentUri)
-//                            if (inputStream != null){
-//                                try {
-//                                    val byteArray = inputStream.readBytes()
-//                                    val requestWavFile = byteArray.toRequestBody("multipart/form-data".toMediaTypeOrNull())
-//                                    val wavFilePart = MultipartBody.Part.createFormData("file", savedFileUri.fileName, requestWavFile)
-//                                    val idRequestBody = RequestBody.create("text/plain".toMediaTypeOrNull(), userPreference.getUserId().toString())
-//                                    Log.d(TAG, "userId: ${userPreference.getUserId().toString()}")
-//                                    lifecycleScope.launchWhenResumed {
-//                                        if (postJob.isActive) postJob.cancel()
-//                                        postJob = launch {
-//                                            viewModel.postWav(idRequestBody, wavFilePart).collect{ result ->
-//                                                result.onSuccess {  response ->
-//                                                    Log.d(TAG, "jenis: ${response.jenis}")
-//                                                    Log.d(TAG, "result: ${response.result}")
-//                                                }
-//                                                result.onFailure {  throwable ->
-//                                                    Log.d(TAG, "throwable: $throwable")
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                } catch (e: IOException){
-//                                    Log.e(TAG, "error reading inputstream: $e" )
-//                                } finally {
-//                                    inputStream.close()
-//                                }
-//                            } else {
-//                                Log.e(TAG, "Failed to open input Stream URI", )
-//                            }
-//                            val cleanedFilePath = savedFileUri.uri.replaceFirst("^content:".toRegex(), "")
-                            val file = File(filePath)
-//                            val requestWavFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-//                            val wavFilePart = requestWavFile.let { MultipartBody.Part.createFormData("file", file.name, it) }
-                            val requestWavFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
-                            val wavFilePart = MultipartBody.Part.createFormData("file", file.name, requestWavFile)
-                            val idRequestBody = RequestBody.create("text/plain".toMediaTypeOrNull(), userPreference.getUserId().toString())
-                            Log.d(TAG, "userId: ${userPreference.getUserId().toString()}")
-                            lifecycleScope.launchWhenResumed {
-                                if (postJob.isActive) postJob.cancel()
-                                postJob = launch {
-                                    viewModel.postWav(idRequestBody, wavFilePart).collect{ result ->
-                                        result.onSuccess {  response ->
-                                            Log.d(TAG, "jenis: ${response.jenis}")
-                                            Log.d(TAG, "result: ${response.result}")
-                                        }
-                                        result.onFailure {  throwable ->
-                                            Log.d(TAG, "throwable: $throwable")
-                                        }
-                                    }
-                                }
-                            }
+                            authViewModel.getId().observe(viewLifecycleOwner, Observer {  id ->
+                                sendWavFile(filePath, id.toString())
+                            })
                         }
 //                        val inputData = mfccProcess(data)
 
@@ -200,8 +141,9 @@ class RecordPatientFragment : Fragment() {
 
                     val receivedInt = ByteBuffer.wrap(mmBuffer, 0, numBytes).order(ByteOrder.LITTLE_ENDIAN).int
                     Log.d(TAG, "received: ${receivedInt.toFloat()}")
-                    ArrayReceiver.pcgArray.add(receivedInt.toFloat())
-                    ArrayReceiver.timeArray.add(elapsedTimeFloat)
+                    ChartData.pcgArray.add(receivedInt.toFloat())
+                    ChartData.timeArray.add(elapsedTimeFloat)
+                    ChartData.setCurrentTime(formatDate(LocalDateTime.now()))
 
                     updateChart()
                 }
@@ -218,6 +160,42 @@ class RecordPatientFragment : Fragment() {
             }
         }
 
+    }
+
+    private fun sendWavFile(filePath: String, id: String){
+        val file = File(filePath)
+        val requestWavFile = file.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val wavFilePart = MultipartBody.Part.createFormData("file", file.name, requestWavFile)
+        val idRequestBody = RequestBody.create("text/plain".toMediaTypeOrNull(), id)
+        lifecycleScope.launchWhenResumed {
+            if (postJob.isActive) postJob.cancel()
+            postJob = launch {
+                audioViewModel.postWav(idRequestBody, wavFilePart).collect{ result ->
+                    result.onSuccess {  response ->
+                        Log.d(TAG, "jenis: ${response.data?.jenis}")
+                        Log.d(TAG, "result: ${response.data?.result}")
+                        binding.tvStatus.text = "Result"
+                        if (response.data?.result == "0"){
+                            binding.statusResult.text = "Aortic Stenosis (AS)"
+                        } else if (response.data?.result == "1"){
+                            binding.statusResult.text = "Mitral Regurgitation (MR)"
+                        } else if (response.data?.result == "2"){
+                            binding.statusResult.text = "Mitral Valve Prolapse (MVP)"
+                        } else if (response.data?.result == "3"){
+                            binding.statusResult.text = "Mitral Stenosis (MS)"
+                        } else if (response.data?.result == "4"){
+                            binding.statusResult.text = "Normal (N)"
+                        } else {
+                            binding.statusResult.text = "Unknown"
+                        }
+                    }
+                    result.onFailure {  throwable ->
+                        Log.d(TAG, "throwable: $throwable")
+                        binding.statusResult.text = throwable.toString()
+                    }
+                }
+            }
+        }
     }
 
     private fun mfccProcess(data: ByteArray): FloatArray {
@@ -315,18 +293,19 @@ class RecordPatientFragment : Fragment() {
         })
         binding.date.text = formatDate(LocalDateTime.now())
 
-        binding.record.setOnClickListener {
+        binding.btnRecord.setOnClickListener {
             if (binding.fileName.text?.isEmpty() == true){
                 binding.fileName.requestFocus()
                 binding.fileName.error = "please insert file name first"
             } else {
                 if (socket != null){
-                    ArrayReceiver.apply {
+                    ChartData.apply {
                         pcgArray.clear()
                         timeArray.clear()
                     }
                     myThreadConnected = ThreadConnected(socket, true)
                     myThreadConnected!!.start()
+                    startCountdown()
                 } else {
                     Toast.makeText(requireContext(), "Connect to  your device first!", Toast.LENGTH_LONG).show()
                 }
@@ -360,23 +339,6 @@ class RecordPatientFragment : Fragment() {
                 binding.deviceName.text = "Bluetooth is not enabled"
             }
         }
-    }
-
-    private fun getLatestWavFile(audioDirPath: String): File? {
-        val dir = File(audioDirPath)
-
-        if (dir.exists() && dir.isDirectory){
-            val wavFiles = dir.listFiles{ file -> file.isFile && file.extension == "wav"}
-
-            if (wavFiles != null){
-                if (wavFiles.isNotEmpty()){
-                    val sortedWavFiles = wavFiles.sortedByDescending { it.lastModified() }
-
-                    return sortedWavFiles[0]
-                }
-            }
-        }
-        return null
     }
 
     @SuppressLint("NewApi")
@@ -422,7 +384,7 @@ class RecordPatientFragment : Fragment() {
 
     private fun updateChart() {
         val dataValues: ArrayList<Entry> = ArrayList()
-        for ((time, audio) in ArrayReceiver.timeArray.zip(ArrayReceiver.pcgArray)) {
+        for ((time, audio) in ChartData.timeArray.zip(ChartData.pcgArray)) {
             if (time <= 10.0){
                     dataValues.add(Entry(time, audio))
                 }
@@ -451,10 +413,28 @@ class RecordPatientFragment : Fragment() {
         return (millis / 1000.0).toFloat().let { "%.3f".format(it).toFloat() }
     }
 
+    private fun startCountdown() {
+        val countDownTimer = object : CountDownTimer(10_000, 1_000) {
+            override fun onTick(millisUntilFinished: Long) {
+                val secondsRemaining = millisUntilFinished / 1000
+                val countdownMessage =
+                    "Please wait $secondsRemaining seconds to give you the best accurate result"
+                binding.statusResult.text = countdownMessage
+            }
+
+            override fun onFinish() {
+                binding.statusResult.text = "Please wait, we're analyzing your record.."
+                binding.cardView.visibility = View.VISIBLE
+            }
+        }
+        countDownTimer.start()
+        binding.cardView.visibility = View.GONE
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        ArrayReceiver.pcgArray.clear()
-        ArrayReceiver.timeArray.clear()
+//        ArrayReceiver.pcgArray.clear()
+//        ArrayReceiver.timeArray.clear()
     }
 
     override fun onDestroy() {
@@ -466,7 +446,7 @@ class RecordPatientFragment : Fragment() {
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
         private const val CUTOFF_FREQUENCY = 4000.0
-        private const val SAMPLE_RATE = 30_000
+        private const val SAMPLE_RATE = 24_000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)

@@ -1,0 +1,85 @@
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent"-->
+<!--    android:id="@+id/exo_layout">-->
+
+<!--    <TextView-->
+<!--        android:id="@+id/exo_"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:textSize="16sp"-->
+<!--        android:gravity="center"-->
+<!--        android:layout_margin="8dp"-->
+<!--        android:fontFamily="@font/poppins_medium"-->
+<!--        android:text="00:00/00:02"-->
+<!--        app:layout_constraintBottom_toBottomOf="@+id/exo_play_pause"-->
+<!--        app:layout_constraintEnd_toStartOf="@+id/exo_play_pause"-->
+<!--        app:layout_constraintTop_toTopOf="@+id/exo_play_pause" />-->
+
+<!--    <androidx.cardview.widget.CardView-->
+<!--        android:id="@+id/exo_play_pause"-->
+<!--        android:layout_width="50dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:layout_margin="16dp"-->
+<!--        android:backgroundTint="@color/orange"-->
+<!--        android:padding="16dp"-->
+<!--        app:cardCornerRadius="16dp"-->
+<!--        app:cardElevation="2dp"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent">-->
+
+<!--        <androidx.appcompat.widget.AppCompatImageView-->
+<!--            android:layout_width="32dp"-->
+<!--            android:layout_height="32dp"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:src="@drawable/play"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent" />-->
+<!--    </androidx.cardview.widget.CardView>-->
+
+<!--</androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:background="@color/orange"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/exo_duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:fontFamily="@font/poppins_medium"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"/>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/orange"
+        android:padding="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/exo_play_pause"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            style="@style/ExoStyledControls.Button.Center.PlayPause"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.cardview.widget.CardView>
+
+
+
+</LinearLayout>

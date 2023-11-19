@@ -6,15 +6,15 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.apicta.stetoskop_digital.databinding.ItemDeviceBinding
-import com.apicta.stetoskop_digital.listener.PairedDeviceListener
+import com.apicta.stetoskop_digital.listener.DeviceListener
 
 @SuppressLint("MissingPermission")
 class DeviceAdapter(private val devices: ArrayList<BluetoothDevice>): RecyclerView.Adapter<DeviceAdapter.ViewHolder>() {
 
-    private var pairedDeviceListener: PairedDeviceListener? = null
+    private var deviceListener: DeviceListener? = null
 
-    fun setOnClickListener(pairedDeviceListener: PairedDeviceListener){
-        this.pairedDeviceListener = pairedDeviceListener
+    fun setOnClickListener(deviceListener: DeviceListener){
+        this.deviceListener = deviceListener
     }
 
     class ViewHolder(private val binding: ItemDeviceBinding): RecyclerView.ViewHolder(binding.root) {
@@ -33,7 +33,7 @@ class DeviceAdapter(private val devices: ArrayList<BluetoothDevice>): RecyclerVi
        holder.bind(devices[position])
 
         holder.itemView.setOnClickListener {
-            pairedDeviceListener?.onClick(devices[holder.adapterPosition])
+            deviceListener?.onClick(devices[holder.adapterPosition])
         }
     }
 

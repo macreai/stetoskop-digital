@@ -1,5 +1,6 @@
-package com.apicta.stetoskop_digital.model.local
+package com.apicta.stetoskop_digital.repo
 
+import com.apicta.stetoskop_digital.model.local.UserPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

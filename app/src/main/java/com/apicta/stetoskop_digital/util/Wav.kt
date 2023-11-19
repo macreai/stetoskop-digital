@@ -3,12 +3,10 @@ package com.apicta.stetoskop_digital.util
 import android.content.ContentValues
 import android.content.Context
 import android.media.AudioFormat
-import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import com.apicta.stetoskop_digital.model.local.SaveResult
 import java.io.IOException
 import java.io.OutputStream
 import kotlin.experimental.and
@@ -97,16 +95,16 @@ object Wav {
 
     fun saveWavFile(context: Context, filename: String, sampleRate: Int, wavData: ByteArray): String? {
         val contentValues = ContentValues()
-        val fileNameWithTime = "${System.currentTimeMillis()}-$filename.wav"
+        val fileNameWithTime = "${System.currentTimeMillis()}_$filename.wav"
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileNameWithTime)
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "audio/wav")
 
         val contentResolver = context?.contentResolver
         val uri = contentResolver?.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-        val desiredByteCount = ArrayReceiver.timeArray.last().toInt() * sampleRate
+        val desiredByteCount = ChartData.timeArray.last().toInt() * sampleRate
         Log.d(TAG, "desiredByCount: $desiredByteCount")
-        Log.d(TAG, "lastTime: ${ArrayReceiver.timeArray.last().toInt()}")
+        Log.d(TAG, "lastTime: ${ChartData.timeArray.last().toInt()}")
 
         try {
             val outputStream: OutputStream = contentResolver?.openOutputStream(uri!!)!!

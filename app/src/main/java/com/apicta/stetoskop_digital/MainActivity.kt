@@ -1,6 +1,5 @@
 package com.apicta.stetoskop_digital
 
-import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
@@ -10,16 +9,12 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.apicta.stetoskop_digital.util.ArrayReceiver
+import com.apicta.stetoskop_digital.util.ChartData
 import com.apicta.stetoskop_digital.viewmodel.BluetoothViewModel
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -98,8 +93,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         bluetoothViewModel.destroyBluetoothName()
-        ArrayReceiver.pcgArray.clear()
-        ArrayReceiver.timeArray.clear()
+        ChartData.pcgArray.clear()
+        ChartData.timeArray.clear()
     }
 
 

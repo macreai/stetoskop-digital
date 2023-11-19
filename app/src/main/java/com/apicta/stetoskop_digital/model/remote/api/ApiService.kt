@@ -1,9 +1,12 @@
 package com.apicta.stetoskop_digital.model.remote.api
 
+import com.apicta.stetoskop_digital.model.remote.response.GetAllPredictionResponse
 import com.apicta.stetoskop_digital.model.remote.response.GetUserByIdResponse
 import com.apicta.stetoskop_digital.model.remote.response.LoginResponse
 import com.apicta.stetoskop_digital.model.remote.response.LogoutResponse
-import com.apicta.stetoskop_digital.model.remote.response.PredictResponse
+import com.apicta.stetoskop_digital.model.remote.response.PatientByIdResponse
+import com.apicta.stetoskop_digital.model.remote.response.PredictionByIdResponse
+import com.apicta.stetoskop_digital.model.remote.response.WavPredictionResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Field
@@ -23,10 +26,10 @@ interface ApiService {
         @Field("password") password: String
     ): LoginResponse
 
-    @GET("user/{id}")
-    suspend fun getUserById(
+    @GET("pasien/{id}")
+    suspend fun getPatientById(
         @Path("id") id: Int
-    ): GetUserByIdResponse
+    ): PatientByIdResponse
 
     @POST("logout")
     suspend fun logout(): LogoutResponse
@@ -36,10 +39,15 @@ interface ApiService {
     suspend fun predict(
         @Part("user_id") id: RequestBody,
         @Part file: MultipartBody.Part
-    ): PredictResponse
+    ): WavPredictionResponse
 
-//    @POST("ownCheck")
-//    suspend fun predict(
-//        @Field()
-//    )
+    @GET("prediksi/user/{id}")
+    suspend fun getAllRecord(
+        @Path("id") id: Int
+    ): GetAllPredictionResponse
+
+    @GET("prediksi/{id}")
+    suspend fun getRecordById(
+        @Path("id") id: Int
+    ): PredictionByIdResponse
 }

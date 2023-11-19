@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".view.patient.DetailFileFragment">
+
+
+    <com.chibde.visualizer.LineBarVisualizer
+        android:id="@+id/audioVisualizer"
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:layout_margin="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bottom_sheet"
+        android:padding="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/playerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/audioVisualizer">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/playerView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/audioVisualizer">
+
+            <TextView
+                android:id="@+id/file_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_bold"
+                android:gravity="center"
+                android:lines="1"
+                android:padding="8dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_doctor"
+                android:layout_width="wrap_content"
+                android:layout_height="27dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Doctor Name"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="@+id/file_name"
+                app:layout_constraintTop_toBottomOf="@+id/file_name" />
+
+            <TextView
+                android:id="@+id/doctor_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_medium"
+                android:textColor="@color/white"
+                android:textSize="24dp"
+                app:layout_constraintStart_toStartOf="@+id/tv_doctor"
+                app:layout_constraintTop_toBottomOf="@+id/tv_doctor" />
+
+            <TextView
+                android:id="@+id/tv_diagnose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Diagnose"
+                android:textColor="@color/white"
+                app:layout_constraintStart_toStartOf="@+id/card_note"
+                app:layout_constraintTop_toBottomOf="@+id/card_note" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_diagnose"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                app:cardBackgroundColor="@color/gray"
+                app:cardCornerRadius="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/card_note"
+                app:layout_constraintStart_toStartOf="@+id/tv_diagnose"
+                app:layout_constraintTop_toBottomOf="@+id/tv_diagnose">
+
+                <TextView
+                    android:id="@+id/diagnose_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:fontFamily="@font/poppins_medium"
+                    android:gravity="center"
+                    android:text="Unknown"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/tv_verified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Verified Status"
+                android:textColor="@color/white"
+                app:layout_constraintStart_toStartOf="@+id/card_diagnose"
+                app:layout_constraintTop_toBottomOf="@+id/card_diagnose" />
+
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_verified"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                app:cardBackgroundColor="@color/gray"
+                app:cardCornerRadius="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/card_diagnose"
+                app:layout_constraintStart_toStartOf="@+id/tv_verified"
+                app:layout_constraintTop_toBottomOf="@+id/tv_verified">
+
+                <TextView
+                    android:id="@+id/verified_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:fontFamily="@font/poppins_medium"
+                    android:gravity="center"
+                    android:text="Unknown"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/tv_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Notes from Doctor"
+                android:textColor="@color/white"
+                app:layout_constraintStart_toStartOf="@+id/tv_doctor"
+                app:layout_constraintTop_toBottomOf="@+id/doctor_name" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_note"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/file_name"
+                app:layout_constraintStart_toStartOf="@+id/tv_note"
+                app:layout_constraintTop_toBottomOf="@+id/tv_note">
+
+                <TextView
+                    android:id="@+id/note_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:fontFamily="@font/poppins_regular"
+                    android:padding="4dp"
+                    android:textSize="12sp" />
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/updated_at_note"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="8dp"
+                app:layout_constraintStart_toStartOf="@+id/card_verified"
+                app:layout_constraintTop_toBottomOf="@+id/card_verified">
+
+                <TextView
+                    android:id="@+id/updated_at_result"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_medium"
+                    android:gravity="center"
+                    android:padding="4dp"
+                    android:text="Updated at"
+                    android:textSize="12sp" />
+
+            </androidx.cardview.widget.CardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.7" />
+
+
+    <com.google.android.exoplayer2.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:resize_mode="fit"
+        app:shutter_background_color="@color/orange"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

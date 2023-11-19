@@ -13,6 +13,8 @@ class ViewModelFactory(private val param: Any): ViewModelProvider.Factory {
             return AuthViewModel(Injection.provideUserPreference(param as DataStore<Preferences>)) as T
         } else if (modelClass.isAssignableFrom(AudioViewModel::class.java)){
             return AudioViewModel(Injection.provideUserPreference(param as DataStore<Preferences>)) as T
+        } else if (modelClass.isAssignableFrom(RecordViewModel::class.java)){
+            return RecordViewModel(Injection.provideUserPreference(param as DataStore<Preferences>)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel Class")
     }
