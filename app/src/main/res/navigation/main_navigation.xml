@@ -33,6 +33,9 @@
         <action
             android:id="@+id/action_homePatientFragment_to_predictPatientFragment"
             app:destination="@id/predictPatientFragment" />
+        <action
+            android:id="@+id/action_homePatientFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/homeDoctorFragment"

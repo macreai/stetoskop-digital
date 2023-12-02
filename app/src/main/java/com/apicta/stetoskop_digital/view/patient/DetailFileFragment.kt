@@ -124,11 +124,13 @@ class DetailFileFragment : Fragment() {
         simpleExoPlayer!!.prepare()
         simpleExoPlayer!!.play()
 
-
-        binding.audioVisualizer.visibility = View.VISIBLE
-        binding.audioVisualizer.setColor(ContextCompat.getColor(requireContext(), R.color.orange))
-        binding.audioVisualizer.setPlayer(simpleExoPlayer!!.audioSessionId)
-
+        try {
+            binding.audioVisualizer.visibility = View.VISIBLE
+            binding.audioVisualizer.setColor(ContextCompat.getColor(requireContext(), R.color.orange))
+            binding.audioVisualizer.setPlayer(simpleExoPlayer!!.audioSessionId)
+        } catch (e: Exception){
+            Toast.makeText(requireContext(), "Visualization not work due rejected permission", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroy() {

@@ -329,24 +329,36 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
+                <Button
+                    android:id="@+id/register"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginHorizontal="29dp"
+                    android:layout_marginTop="32dp"
+                    android:backgroundTint="@color/green"
+                    android:fontFamily="@font/poppins_bold"
+                    android:text="Sign Up"
+                    android:textAllCaps="true"
+                    android:textColor="@color/white_text"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="@+id/password_confirm_frame"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toStartOf="@+id/password_confirm_frame"
+                    app:layout_constraintTop_toBottomOf="@+id/password_confirm_frame" />
+
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
 
-        <Button
-            android:id="@+id/register"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginHorizontal="29dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@color/green"
-            android:fontFamily="@font/poppins_bold"
-            android:text="Sign Up"
-            android:textAllCaps="true"
-            android:textColor="@color/white_text"
-            android:textSize="16sp"
+        <ProgressBar
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

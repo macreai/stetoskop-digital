@@ -11,6 +11,7 @@ import com.apicta.stetoskop_digital.model.remote.response.GetUserByIdResponse
 import com.apicta.stetoskop_digital.model.remote.response.LoginResponse
 import com.apicta.stetoskop_digital.model.remote.response.LogoutResponse
 import com.apicta.stetoskop_digital.model.remote.response.PatientByIdResponse
+import com.apicta.stetoskop_digital.model.remote.response.RegisterResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -75,6 +76,18 @@ class AuthViewModel(private val preference: UserPreference): ViewModel() {
     suspend fun logout(): Flow<Result<LogoutResponse>> = flow {
         try {
             val response = ApiConfig.getApiService(preference).logout()
+            emit(Result.success(response))
+        } catch (e: Exception){
+            e.printStackTrace()
+            emit(Result.failure(e))
+        }
+    }
+
+    suspend fun register(
+        email: String, name: String, address: String, gender: String, password: String
+    ): Flow<Result<RegisterResponse>> = flow {
+        try {
+            val response = ApiConfig.getApiService(preference).patientRegister(email, name, address, gender, password)
             emit(Result.success(response))
         } catch (e: Exception){
             e.printStackTrace()

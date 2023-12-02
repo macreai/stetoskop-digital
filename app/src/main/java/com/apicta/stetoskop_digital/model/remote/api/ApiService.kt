@@ -6,6 +6,7 @@ import com.apicta.stetoskop_digital.model.remote.response.LoginResponse
 import com.apicta.stetoskop_digital.model.remote.response.LogoutResponse
 import com.apicta.stetoskop_digital.model.remote.response.PatientByIdResponse
 import com.apicta.stetoskop_digital.model.remote.response.PredictionByIdResponse
+import com.apicta.stetoskop_digital.model.remote.response.RegisterResponse
 import com.apicta.stetoskop_digital.model.remote.response.WavPredictionResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -50,4 +51,14 @@ interface ApiService {
     suspend fun getRecordById(
         @Path("id") id: Int
     ): PredictionByIdResponse
+
+    @Multipart
+    @POST("register_pasien")
+    suspend fun patientRegister(
+        @Part("email") email: String,
+        @Part("nama_lengkap") name: String,
+        @Part("alamat") address: String,
+        @Part("gender") gender: String,
+        @Part("password") password: String
+    ): RegisterResponse
 }

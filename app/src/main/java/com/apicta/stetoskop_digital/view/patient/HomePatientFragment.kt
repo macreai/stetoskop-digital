@@ -103,11 +103,16 @@ class HomePatientFragment : Fragment() {
                 viewModel.getUserById(id).collect{ result ->
                     result.onSuccess {  response ->
                         if (response.status == "success"){
-                            DoctorHolder.setDoctor(response.data?.namaDokter!!)
-                            binding.username.text = if (response.data?.namaLengkap.isNullOrEmpty()) {
-                                "User"
+                            if (response.data == null){
+                                view?.findNavController()?.navigate(R.id.action_homePatientFragment_to_loginFragment)
+                                Toast.makeText(requireContext(), "Sorry your account is not verified yet", Toast.LENGTH_SHORT).show()
                             } else {
-                                response.data?.namaLengkap
+                                DoctorHolder.setDoctor(response.data?.namaDokter!!)
+                                binding.username.text = if (response.data?.namaLengkap.isNullOrEmpty()) {
+                                    "User"
+                                } else {
+                                    response.data?.namaLengkap
+                                }
                             }
                         } else {
                             binding.username.text = "Failed to connect"
@@ -178,35 +183,38 @@ class HomePatientFragment : Fragment() {
                 dialog.dismiss()
             }
             .setPositiveButton("Yes"){ _, _ ->
-                lifecycleScope.launch {
-                    try {
-                        val result = viewModel.logout().single()
-                        handleLogoutResult(result)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                viewModel.deleteId()
+                viewModel.deleteToken()
+                activity?.finish()
+//                lifecycleScope.launch {
+//                    try {
+//                        val result = viewModel.logout().single()
+//                        handleLogoutResult(result)
+//                    } catch (e: Exception) {
+//                        e.printStackTrace()
+//                    }
+//                }
             }.show()
 
     }
 
-    private fun handleLogoutResult(result: Result<LogoutResponse>) {
-        result.onSuccess { response ->
-            if (response.status == "success"){
-                Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
-                viewModel.deleteId()
-                viewModel.deleteToken()
-                activity?.finish()
-            } else {
-                Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
-            }
-        }
-        result.onFailure { throwable ->
-            Log.e(TAG, "logout: $throwable")
-            throwable.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to Logout", Toast.LENGTH_SHORT).show()
-        }
-    }
+//    private fun handleLogoutResult(result: Result<LogoutResponse>) {
+//        result.onSuccess { response ->
+//            if (response.status == "success"){
+//                Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
+//                viewModel.deleteId()
+//                viewModel.deleteToken()
+//                activity?.finish()
+//            } else {
+//                Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//        result.onFailure { throwable ->
+//            Log.e(TAG, "logout: $throwable")
+//            throwable.printStackTrace()
+//            Toast.makeText(requireContext(), "Failed to Logout", Toast.LENGTH_SHORT).show()
+//        }
+//    }
 
     private fun requestStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

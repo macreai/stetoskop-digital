@@ -38,6 +38,9 @@ class LoginFragment : Fragment() {
 
         login()
         checkLoginUser()
+        binding.register.setOnClickListener {
+            view.findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
 
         return view
     }
@@ -53,6 +56,7 @@ class LoginFragment : Fragment() {
 
     private fun login() {
         binding.login.setOnClickListener {
+            binding.loading.visibility = View.VISIBLE
             val email = binding.email.text.toString()
             val password = binding.password.text.toString()
 
@@ -64,6 +68,7 @@ class LoginFragment : Fragment() {
                     loginJob = launch {
                         viewModel.login(email, password).collect{ result ->
                             result.onSuccess { loginResponse ->
+                                binding.loading.visibility = View.GONE
                                 viewModel.saveId(loginResponse.user?.id!!)
                                 Log.d(TAG, "login: ${loginResponse.user?.id.toString()}")
                                 viewModel.saveToken(loginResponse.authorisation!!.token!!)
@@ -78,6 +83,7 @@ class LoginFragment : Fragment() {
                                 }
                             }
                             result.onFailure { throwable ->
+                                binding.loading.visibility = View.GONE
                                 Log.e(TAG, "login: $throwable")
                                 throwable.printStackTrace()
                                 Toast.makeText(requireContext(), "Failed to Connect", Toast.LENGTH_SHORT).show()

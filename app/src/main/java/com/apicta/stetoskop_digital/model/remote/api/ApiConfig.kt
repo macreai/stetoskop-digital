@@ -18,10 +18,10 @@ object ApiConfig {
         }
         val client = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .addInterceptor(AuthRepository(preference))
-            .connectTimeout(60 * 5, TimeUnit.SECONDS)
-            .readTimeout(60 * 5, TimeUnit.SECONDS)
-            .writeTimeout(60 * 5, TimeUnit.SECONDS)
+//            .addInterceptor(AuthRepository(preference))
+            .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
             .build()
         val retrofit = Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
@@ -30,4 +30,6 @@ object ApiConfig {
             .build()
         return retrofit.create(ApiService::class.java)
     }
+
+    private const val TIMEOUT: Long = 5 * 60
 }

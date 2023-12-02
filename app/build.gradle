@@ -38,11 +38,12 @@ android {
         buildConfig true
         mlModelBinding true
     }
-    repositories {
-        maven {
-            name = "TarsosDSP repository"
-            url = "https://mvn.0110.be/releases"
-        }
+}
+
+repositories {
+    maven {
+        name = "TarsosDSP repository"
+        url = "https://mvn.0110.be/releases"
     }
 }
 
@@ -94,13 +95,10 @@ dependencies {
 
     //audio player
     implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
-//
-//    implementation 'com.android.volley:volley:1.2.1' // For handling network requests (if using URL)
-//    implementation 'com.github.glomadrian:Grav:1.2' // A popular audio visualization library for Android
-
-//    implementation 'com.gauravk.audiovisualizer:audiovisualizer:0.9.2'
-
     implementation 'io.github.gautamchibde:audiovisualizer:2.2.5'
 
+    //audio processing
+    implementation 'be.tarsos.dsp:core:2.5'
+    implementation 'be.tarsos.dsp:jvm:2.5'
 
 }

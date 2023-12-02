@@ -23,12 +23,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
-import com.apicta.stetoskop_digital.R
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.AudioProcessor
+import be.tarsos.dsp.filters.LowPassFS
+import be.tarsos.dsp.io.TarsosDSPAudioInputStream
 import com.apicta.stetoskop_digital.audio.MFCC
 import com.apicta.stetoskop_digital.dataStore
 import com.apicta.stetoskop_digital.databinding.FragmentRecordPatientBinding
 import com.apicta.stetoskop_digital.ml.Model
-import com.apicta.stetoskop_digital.model.local.UserPreference
 import com.apicta.stetoskop_digital.util.ChartData
 import com.apicta.stetoskop_digital.util.BluetoothSocketHolder
 import com.apicta.stetoskop_digital.util.Wav
@@ -198,6 +200,9 @@ class RecordPatientFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun filterWav(wavFile: File){
     }
 
     private fun mfccProcess(data: ByteArray): FloatArray {
@@ -448,8 +453,8 @@ class RecordPatientFragment : Fragment() {
     companion object{
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
-//        private const val CUTOFF_FREQUENCY = 4000.0
-        private const val SAMPLE_RATE = 36_000
+        private const val CUTOFF_FREQUENCY = 1000
+        private const val SAMPLE_RATE = 24_000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
         private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
