@@ -298,7 +298,6 @@ class RecordPatientFragment : Fragment() {
             binding.deviceName.text = it ?: "No Device"
             Log.d(TAG, "btName: $it")
         })
-        binding.date.text = formatDate(LocalDateTime.now())
 
         binding.btnRecord.setOnClickListener {
             if (binding.fileName.text?.isEmpty() == true){
@@ -453,7 +452,7 @@ class RecordPatientFragment : Fragment() {
     companion object{
         private const val TAG = "Record Patient Fragment"
         private const val REQUEST_PERMISSION = 1
-        private const val CUTOFF_FREQUENCY = 1000
+//        private const val CUTOFF_FREQUENCY = 1000
         private const val SAMPLE_RATE = 24_000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
